@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Constants -->
+  <xacro:property name="PI" value="3.14159265359"/>
+  <xacro:property name="servo_offset" value="0.01011" /> <!-- axle is 10.11mm offset from top of servo -->
+
+  <xacro:property name="wheel_radius" value="0.054"/>  <!-- 54mm radius = 108mm diameter -->
+  <xacro:property name="wheel_depth" value="0.045"/>   <!-- 45mm thickness -->
+
+  <xacro:property name="plate_radius" value="0.108"/>   <!-- 108mm base radius -->
+  <xacro:property name="plate_height" value="0.007"/> <!-- Estimated base thickness -->
+
+  <xacro:property name="motor_mount_inset" value="0.00425"/> <!-- Distance from the radius the mount is inset -->
+  <xacro:property name="motor_mount_height" value="0.0455"/>
+  <xacro:property name="motor_mount_width" value="0.0475"/>
+  <xacro:property name="motor_mount_depth" value="0.0348"/>
+
+  <!-- Base Link: Bottom plate of the LeKiwi. Origin is the center of the top surface -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 ${-PI/2}"/>
+      <geometry>
+        <mesh filename="package://lekiwi_description/meshes/base_plate_layer1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${-plate_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${plate_radius}" length="${plate_height}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${-plate_height/2}" rpy="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.0226" ixy="0.0" ixz="0.0"
+               iyy="0.0226" iyz="0.0"
+               izz="0.0450"/>
+    </inertial>
+  </link>
+
+  <!-- Drive Motors -->
+  <xacro:macro name="motor" params="prefix angle">
+    <!-- Translation from base plate to motor -->
+    <xacro:property name="x_mount" value="${(plate_radius - motor_mount_inset) * cos(angle)}"/>
+    <xacro:property name="y_mount" value="${(plate_radius - motor_mount_inset) * sin(angle)}"/>
+
+    <!-- Translation from motor to wheel -->
+    <xacro:property name="z_axle" value="${servo_offset}"/>
+
+    <!-- Link representing the motor mount -->
+    <link name="${prefix}_motor">
+      <visual>
+        <origin xyz="${-motor_mount_depth} ${motor_mount_width/2} 0" rpy="${PI/2} 0 0"/>
+        <material name="gray"/>
+        <geometry>
+          <mesh filename="package://lekiwi_description/meshes/drive_motor_mount_v2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+      </visual>
+
+      <visual>
+        <origin xyz="0.0027 0 ${servo_offset}" rpy="0 ${-PI/2} ${-PI/2}"/>
+        <geometry>
+          <mesh filename="package://lekiwi_description/meshes/st3215.dae"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="${-motor_mount_depth/2} 0 ${motor_mount_height/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${motor_mount_depth} ${motor_mount_width} ${motor_mount_height}"/>
+        </geometry>
+      </collision>
+
+      <!-- TODO: collison -->
+      <!-- TODO: inertial -->
+    </link>
+
+    <joint name="${prefix}_motor_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${prefix}_motor"/>
+      <origin xyz="${x_mount} ${y_mount} 0" rpy="0 0 ${angle}"/>
+    </joint>
+
+    <!-- Link representing the wheel -->
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0.003 0" rpy="${-PI/2} 0 0"/>
+        <material name="black"/>
+        <geometry>
+          <mesh filename="package://lekiwi_description/meshes/omni_wheel_xl.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+      </visual>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://lekiwi_description/meshes/st3215_horn_front.dae"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${(wheel_depth/2) + 0.003} 0" rpy="${-PI/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_depth}"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="0 0.003 0" rpy="${-PI/2} 0 0"/>
+        <mass value="0.154"/>
+        <!-- Inertia for a cylinder:  Ixx=Izz=m*(3*r^2+h^2)/12, Iyy=m*r^2/2 -->
+        <!-- For r=0.054m, h=0.045m, m=0.154kg -->
+        <inertia ixx="0.000146" ixy="0.0" ixz="0.0"
+                 iyy="0.000225" iyz="0.0"
+                 izz="0.000146"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="${prefix}_motor"/>
+      <child link="${prefix}_wheel_link"/>
+
+      <!-- Add PI/2 to angle so wheel +X points in rolling direction (tangent), not radial -->
+      <origin xyz="0.0027 0 ${servo_offset}" rpy="0 0 ${-PI/2}"/>
+      <axis xyz="0 1 0"/>  <!-- Rotation around local Y axis (perpendicular to wheel) -->
+      <limit effort="10.0" velocity="10.0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <!-- Translation from the motor to the wheel-->
+  </xacro:macro>
+
+  <xacro:motor prefix="left" angle="${PI/3}"/>
+  <xacro:motor prefix="rear" angle="${PI}"/>
+  <xacro:motor prefix="right" angle="${-PI/3}"/>
+
+
+  <!-- Base footprint (for navigation) -->
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${wheel_radius - servo_offset}" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- Upper plate link -->
+  <link name="upper_plate_link">
+    <!-- Upper Plate -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 ${-PI/2}"/>
+      <geometry>
+        <mesh filename="package://lekiwi_description/meshes/base_plate_layer2.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${-plate_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${plate_radius}" length="${plate_height}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${-plate_height/2}" rpy="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.0226" ixy="0.0" ixz="0.0"
+               iyy="0.0226" iyz="0.0"
+               izz="0.0450"/>
+    </inertial>
+  </link>
+
+  <joint name="upper_plate_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="upper_plate_link"/>
+    <origin xyz="0 0 ${motor_mount_height + plate_height}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Instantiate the three omni wheels -->
+
+</robot>

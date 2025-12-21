@@ -1,0 +1,72 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 50  # Hz
+
+    # Joint State Broadcaster
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    # Omni Drive Controller
+    omni_wheel_drive_controller:
+      type: omni_wheel_drive_controller/OmniWheelDriveController
+
+omni_wheel_drive_controller:
+  ros__parameters:
+    # Wheel configuration
+    wheel_names:
+      - left_wheel_joint
+      - rear_wheel_joint
+      - right_wheel_joint
+
+    # Robot geometry (in meters and radians)
+    wheel_radius: 0.054  # 54mm radius (108mm diameter)
+    wheel_base_radius: 0.1305  # (108mm + 45mm/2) = 130.5 mm from center to wheel center
+
+    wheel_offset: 1.0471975512
+    robot_radius: 0.1305
+
+    # Wheel angles relative to +X axis (in radians)
+    wheel_angles:
+      - 1.0472  # 60 degrees (left)
+      - 3.14159 # 180 degrees (rear)
+      - -1.0472 # -60 degrees (right)
+
+    # Command and state interfaces
+    command_interfaces:
+      - velocity
+
+    state_interfaces:
+      - position
+      - velocity
+
+    # Velocity limits (m/s and rad/s)
+    linear:
+      x:
+        max_velocity: 0.5
+        max_acceleration: 1.0
+      y:
+        max_velocity: 0.5
+        max_acceleration: 1.0
+
+    angular:
+      z:
+        max_velocity: 1.0
+        max_acceleration: 2.0
+
+    # Publishing options
+    publish_rate: 50.0
+    enable_odom_tf: true
+    odom_frame_id: odom
+    base_frame_id: base_link
+
+    # Odometry configuration
+    open_loop: false
+    position_feedback: true
+    velocity_rolling_window_size: 10
+
+joint_state_broadcaster:
+  ros__parameters:
+    joints:
+      - left_wheel_joint
+      - rear_wheel_joint
+      - right_wheel_joint

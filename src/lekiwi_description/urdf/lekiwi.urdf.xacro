@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="lekiwi">
+
+  <!-- Include materials -->
+  <xacro:include filename="$(find lekiwi_description)/urdf/materials.xacro" />
+  
+  <!-- Include omni wheel base -->
+  <xacro:include filename="$(find lekiwi_description)/urdf/omni_base.xacro" />
+  
+  <!-- Include ros2_control -->
+  <xacro:include filename="$(find lekiwi_description)/urdf/lekiwi.ros2_control.xacro" />
+
+</robot>
