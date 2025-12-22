@@ -98,10 +98,10 @@ class MotorBridge(Node):
         self.get_logger().info("Motor bus connected and configured.")
 
         # Publishers / Subscribers
-        self.joint_states_pub = self.create_publisher(JointState, "so101_follower/joint_states", 10)
+        self.joint_states_pub = self.create_publisher(JointState, "/joint_states", 10)
         self.joint_commands_sub = self.create_subscription(
             JointState,
-            "so101_follower/joint_commands",
+            "/joint_commands",
             self._arm_command_cb,
             10,
         )

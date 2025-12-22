@@ -40,17 +40,6 @@ def generate_launch_description():
         }]
     )
 
-    # Publish Zero Joints Node - publishes zero joint states for visualization
-    publish_zero_joints_node = Node(
-        package='lekiwi_description',
-        executable='publish_zero_joints.py',
-        name='publish_zero_joints',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-        }]
-    )
-
     # RViz2 Node - visualize the robot
     rviz_node = Node(
         package='rviz2',
@@ -70,6 +59,5 @@ def generate_launch_description():
             description='Use simulation (Gazebo) clock if true'
         ),
         robot_state_publisher_node,
-        publish_zero_joints_node,
         rviz_node,
     ])
