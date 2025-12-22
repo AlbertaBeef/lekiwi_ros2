@@ -124,7 +124,7 @@
 
       <!-- Add PI/2 to angle so wheel +X points in rolling direction (tangent), not radial -->
       <origin xyz="0.0027 0 ${servo_offset}" rpy="0 0 ${-PI/2}"/>
-      <axis xyz="0 1 0"/>  <!-- Rotation around local Y axis (perpendicular to wheel) -->
+      <axis xyz="0 -1 0"/>  <!-- Rotation around local Y axis (perpendicular to wheel) -->
       <limit effort="10.0" velocity="10.0"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
