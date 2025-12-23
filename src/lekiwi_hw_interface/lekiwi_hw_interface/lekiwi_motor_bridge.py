@@ -37,13 +37,19 @@ from lekiwi_hw_interface.motors import Motor, MotorNormMode
 
 PORT_DEFAULT = "/dev/ttyACM0"
 
-JOINTS = {
-    #"shoulder_pan": {"id": 1, "model": "sts3215"},
-    #"shoulder_lift": {"id": 2, "model": "sts3215"},
-    #"elbow_flex": {"id": 3, "model": "sts3215"},
-    #"wrist_flex": {"id": 4, "model": "sts3215"},
-    #"wrist_roll": {"id": 5, "model": "sts3215"},
-    #"gripper": {"id": 6, "model": "sts3215"},
+LEKIWI_ONLY_JOINTS = {
+    "left_wheel_joint": {"id": 7, "model": "sts3215"},
+    "rear_wheel_joint": {"id": 8, "model": "sts3215"},
+    "right_wheel_joint": {"id": 9, "model": "sts3215"},
+}
+
+LEKIWI_SO101_JOINTS = {
+    "shoulder_pan": {"id": 1, "model": "sts3215"},
+    "shoulder_lift": {"id": 2, "model": "sts3215"},
+    "elbow_flex": {"id": 3, "model": "sts3215"},
+    "wrist_flex": {"id": 4, "model": "sts3215"},
+    "wrist_roll": {"id": 5, "model": "sts3215"},
+    "gripper": {"id": 6, "model": "sts3215"},
     "left_wheel_joint": {"id": 7, "model": "sts3215"},
     "rear_wheel_joint": {"id": 8, "model": "sts3215"},
     "right_wheel_joint": {"id": 9, "model": "sts3215"},
@@ -71,7 +77,7 @@ class MotorBridge(Node):
         calib_path = pathlib.Path(self.get_parameter("calib_file").get_parameter_value().string_value).expanduser()
         
         # verbose
-        self.declare_parameter("verbose", True)
+        self.declare_parameter("verbose", False)
         self.verbose = self.get_parameter('verbose').value          
         self.get_logger().info('Verbose : "%s"' % self.verbose)
 
@@ -80,19 +86,31 @@ class MotorBridge(Node):
         self.topic_name = self.get_parameter('topic_name').value
         self.get_logger().info('Topic name : "%s"' % self.topic_name)
 
-        # Build motor objects
-        motors = {
-            name: Motor(cfg["id"], cfg["model"], MotorNormMode.DEGREES)
-            for name, cfg in JOINTS.items()
-        }
-        self.bus = FeetechMotorsBus(port, motors)
+        # use_so101
+        self.declare_parameter("use_so101", False)
+        self.use_so101 = self.get_parameter('use_so101').value          
+        self.get_logger().info('Use SO_101 : "%s"' % self.use_so101)
+        
+        # Define motors expected to be present on USB controller bus
+        if self.use_so101:
+            self.joints = LEKIWI_SO101_JOINTS
+        else:
+            self.joints = LEKIWI_ONLY_JOINTS
+        
 
         self.get_logger().info(f"Connecting to Feetech bus on {port} …")
         try:
+            self.motors = {
+                name: Motor(cfg["id"], cfg["model"], MotorNormMode.DEGREES)
+                for name, cfg in self.joints.items()
+            }
+            self.bus = FeetechMotorsBus(port, self.motors)
             self.bus.connect()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.get_logger().error(f"Could not open motor bus: {exc}")
             raise
+            
+            
         self.bus.configure_motors()
         self.bus.enable_torque()
         self.get_logger().info("Motor bus connected and configured.")
@@ -113,7 +131,7 @@ class MotorBridge(Node):
         )
 
         # Command cache (rad)
-        self.current_commands: dict[str, float] = {name: 0.0 for name in JOINTS}
+        self.current_commands: dict[str, float] = {name: 0.0 for name in self.joints}
 
         # Feetech STS3215 resolution: 4096 steps per 2π rad
         self._steps_per_rad = 4096.0 / (2 * math.pi)
@@ -125,8 +143,8 @@ class MotorBridge(Node):
         if calib_path.is_file():
             with open(calib_path, "r", encoding="utf-8") as fp:
                 calib = yaml.safe_load(fp)
-            self._home_offsets = {j: calib[j]["homing_offset"] for j in JOINTS if j in calib}
-            self._limits = {j: (calib[j]["range_min"], calib[j]["range_max"]) for j in JOINTS if j in calib}
+            self._home_offsets = {j: calib[j]["homing_offset"] for j in self.joints if j in calib}
+            self._limits = {j: (calib[j]["range_min"], calib[j]["range_max"]) for j in self.joints if j in calib}
             self.get_logger().info(f"Loaded calibration from {calib_path}")
         else:
             self.get_logger().warn(f"Calibration file {calib_path} not found – will capture offsets on first read.")
@@ -136,6 +154,9 @@ class MotorBridge(Node):
 
         # Flag to ensure we only command the initial middle position once
         self._initial_move_done = False
+        
+        # Count-down to disable velocity when no more Twist commands are being received
+        self._twist_received = 0
 
         # Define three speed levels and a current index
         self.speed_levels = [
@@ -178,11 +199,14 @@ class MotorBridge(Node):
         if self.verbose:
             self.get_logger().info('Base Commands : "%s"' % self.base_commands)
             # Base Commands : "{'base_left_wheel': -1129, 'base_back_wheel': 0, 'base_right_wheel': 1129}"
-
-        #self.current_commands["left_wheel_joint"] = self.base_commands["base_left_wheel"]
-        #self.current_commands["back_wheel_joint"] = self.base_commands["base_back_wheel"]
-        #self.current_commands["right_wheel_joint"] = self.base_commands["base_right_wheel"]
+       
+        # This works, but never stops when Twist commands are no longer received
         self.bus.sync_write("Goal_Velocity", self.base_commands)
+        
+        # Not working ... humm ... 
+        #self.current_commands["left_wheel_joint"] = self.base_commands["left_wheel_joint"]
+        #self.current_commands["rear_wheel_joint"] = self.base_commands["rear_wheel_joint"]
+        #self.current_commands["right_wheel_joint"] = self.base_commands["right_wheel_joint"]                
                 
     def _timer_cb(self):
         # --- Read present positions
@@ -199,14 +223,14 @@ class MotorBridge(Node):
                 n: (raw - self._home_offsets.get(n, 0)) * (2 * math.pi) / 4096.0 if self._home_offsets else 0.0
                 for n, raw in raw_positions.items()
             }
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.get_logger().warn(f"sync_read failed: {exc}")
             return
 
         # Publish joint states
         js = JointState()
         js.header.stamp = self.get_clock().now().to_msg()
-        js.name = list(JOINTS.keys())
+        js.name = list(self.joints.keys())
         js.position = [positions[n] for n in js.name]
         js.velocity = []
         js.effort = []
@@ -223,7 +247,7 @@ class MotorBridge(Node):
             and self._home_offsets is not None
             and self._limits is not None
         ):
-            for name in JOINTS:
+            for name in self.joints:
                 if name in self._limits and name in self._home_offsets:
                     low, high = self._limits[name]
                     mid_raw = int((low + high) / 2)
@@ -245,7 +269,7 @@ class MotorBridge(Node):
                     raw = max(low, min(high, raw))
                 raw_goals[n] = raw
             self.bus.sync_write("Goal_Position", raw_goals, normalize=False)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.get_logger().warn(f"sync_write failed: {exc}")
     
     # ---------------------------------------------------------------------
