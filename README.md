@@ -64,7 +64,7 @@ ros2 run lekiwi_hw_interface lekiwi_motor_bridge
 
 ## 🎛️ Advanced Usage
 
-### Hardware Control with Joint State Publisher
+### Hardware Control with Twist Publisher
 For manual joint control and visualization with the hardware interface:
 
 ```bash
