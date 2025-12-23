@@ -115,7 +115,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgement
 
 This repo is inspired by the following, and is meant to be used with:
-- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Inspiration for this repo
+- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Motor Bridge and Simulation file for SO-101
+- [LeKiwi Description](https://github.com/teknoman117/lekiwi_description) - Simulation files for LeKiwi
 
 ## 🙋‍♂️ Support
 
@@ -127,8 +128,11 @@ For questions and support:
 ## 🔗 Related Projects
 
 - [LeRobot](https://github.com/huggingface/lerobot) - Main LeRobot framework
-- [SO-101 Hardware](https://github.com/TheRobotStudio/SO-ARM101) - Original hardware design
-- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Inspiration for this repo
+- [SO-101 Hardware](https://github.com/TheRobotStudio/SO-ARM101) - Original SO-101 hardware design
+- [LeKiwi Hardware](https://github.com/SIGRobotics-UIUC/LeKiwi) - Original LeKiwi hardware design
+
+- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Motor Bridge and Simulation file for SO-101
+- [LeKiwi Description](https://github.com/teknoman117/lekiwi_description) - Simulation files for LeKiwi
 
 ---
 
