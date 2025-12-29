@@ -27,7 +27,9 @@ install(
 )
 # Install scripts
 install(
-    PROGRAMS scripts/publish_zero_joints.py
+    PROGRAMS
+    scripts/publish_zero_joints.py
+    scripts/joint_state_follower.py
     DESTINATION lib/${PROJECT_NAME}
 )
 

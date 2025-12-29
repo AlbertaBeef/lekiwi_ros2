@@ -21,17 +21,6 @@ def generate_launch_description():
     
     os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path + os.pathsep + lekiwi_model_path
 
-    viewer1_name_arg = DeclareLaunchArgument(
-        "viewer1_name",
-        default_value="Hand Controller",
-        description="Name of Image Viewer for hand_controller/annotations."
-    )
-    use_imshow_arg = DeclareLaunchArgument(
-        "use_imshow",
-        default_value="True",
-        description="Use usbcam_subscriber to view annotated image."
-    )
-    
     rviz_launch_arg = DeclareLaunchArgument(
         'rviz', default_value='true',
         description='Open RViz.'
@@ -48,8 +37,8 @@ def generate_launch_description():
     )
 
     # Path to URDF file
-    urdf_file = os.path.join(pkg_lekiwi_description, 'urdf', 'lekiwi.urdf.xacro')
-    #urdf_file = os.path.join(pkg_lekiwi_description, 'urdf', 'lekiwi.gazebo.xacro')
+    #urdf_file = os.path.join(pkg_lekiwi_description, 'urdf', 'lekiwi.urdf.xacro')
+    urdf_file = os.path.join(pkg_lekiwi_description, 'urdf', 'lekiwi.gazebo.xacro')
     
     # Path to RViz config file
     rviz_config_file = os.path. join(pkg_lekiwi_description, 'rviz2', 'display.rviz')
@@ -73,31 +62,6 @@ def generate_launch_description():
         }.items()
     )
 
-    # Hand controller (most nodes are launch in *_part1.launch.py)
-    hand_controller_viewer_node = Node(
-        package='hand_controller',
-        executable='usbcam_subscriber_node',
-        name="hand_controller_annotations",
-        parameters=[
-            {"viewer_name":LaunchConfiguration("viewer1_name")}
-        ],
-        remappings=[
-            ("image_raw", "hand_controller/image_annotated")
-        ],
-        condition=IfCondition(PythonExpression(['"', LaunchConfiguration('use_imshow'), '" == "True"']))
-    )
-
-    # Launch rviz
-    #rviz_node = Node(
-    #    package='rviz2',
-    #    executable='rviz2',
-    #    arguments=['-d', os.path.join(pkg_bme_gazebo_basics, 'rviz', 'rviz.rviz')],
-    #    condition=IfCondition(LaunchConfiguration('rviz')),
-    #    parameters=[
-    #        {'use_sim_time': True},
-    #    ]
-    #)
-
     # Spawn the URDF model using the `/world/<world_name>/create` service
     spawn_urdf_node = Node(
         package="ros_gz_sim",
@@ -105,28 +69,17 @@ def generate_launch_description():
         arguments=[
             "-name", "my_robot",
             "-topic", "robot_description",
-            "-x", "0.0", "-y", "0.0", "-z", "0.5", "-Y", "0.0"  # Initial spawn position
+            # Initial spawn position
+            "-x", "0.0", 
+            "-y", "0.0", 
+            "-z", "0.1",      # We'll calculate this below
+            "-Y", "3.14159"   # 180 degrees in radians (π)
         ],
         output="screen",
         parameters=[
             {'use_sim_time': True},
         ]
     )
-
-    #robot_state_publisher_node = Node(
-    #    package='robot_state_publisher',
-    #    executable='robot_state_publisher',
-    #    name='robot_state_publisher',
-    #    output='screen',
-    #    parameters=[
-    #        {'robot_description': Command(['xacro', ' ', urdf_file_path]),
-    #         'use_sim_time': True},
-    #    ],
-    #    remappings=[
-    #        ('/tf', 'tf'),
-    #        ('/tf_static', 'tf_static')
-    #    ]
-    #)
 
     # Robot State Publisher - publishes TF from URDF
     robot_state_publisher_node = Node(
@@ -153,15 +106,19 @@ def generate_launch_description():
     )
 
     # Node to bridge messages like /cmd_vel and /odom
+    #    arguments=[
+    #        "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
+    #        "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
+    #        "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
+    #        "/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model",
+    #        "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V"
+    #    ],
     gz_bridge_node = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
             "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
-            "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
-            "/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model",
-            "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V"
         ],
         output="screen",
         parameters=[
@@ -169,18 +126,40 @@ def generate_launch_description():
         ]
     )
 
+    #joint_state_broadcaster_spawner = Node(
+    #    package="controller_manager",
+    #    executable="spawner",
+    #    arguments=["joint_state_broadcaster"],
+    #    parameters=[{'use_sim_time': True}],
+    #)
+
+    omni_controllers_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["omni_wheel_drive_controller"],
+        parameters=[{'use_sim_time': True}],
+    )
+    joint_state_follower_node = Node(
+        package='lekiwi_description',
+        executable='joint_state_follower.py',
+        name='joint_state_follower',
+        output='screen',
+        parameters=[{'use_sim_time': True}]
+    )
+
     launchDescriptionObject = LaunchDescription()
 
-    launchDescriptionObject.add_action(viewer1_name_arg)
-    launchDescriptionObject.add_action(use_imshow_arg)    
     launchDescriptionObject.add_action(rviz_launch_arg)
     launchDescriptionObject.add_action(world_arg)
     launchDescriptionObject.add_action(model_arg)
     launchDescriptionObject.add_action(world_launch)
-    launchDescriptionObject.add_action(hand_controller_viewer_node)
     launchDescriptionObject.add_action(rviz_node)
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
     launchDescriptionObject.add_action(gz_bridge_node)
+    #launchDescriptionObject.add_action(joint_state_broadcaster_spawner)
+    launchDescriptionObject.add_action(omni_controllers_spawner)
+    launchDescriptionObject.add_action(joint_state_follower_node)
+    
     
     return launchDescriptionObject    
