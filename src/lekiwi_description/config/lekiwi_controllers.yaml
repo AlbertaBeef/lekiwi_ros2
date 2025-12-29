@@ -8,7 +8,7 @@ controller_manager:
 
     # Omni Drive Controller
     omni_wheel_drive_controller:
-      type: omni_wheel_controller/OmniWheelDriveController
+      type: omni_wheel_drive_controller/OmniWheelDriveController
 
 omni_wheel_drive_controller:
   ros__parameters:

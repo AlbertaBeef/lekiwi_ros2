@@ -52,7 +52,7 @@ def generate_launch_description():
     urdf_file = os.path.join(pkg_lekiwi_description, 'urdf', 'lekiwi.gazebo.xacro')
     
     # Path to RViz config file
-    rviz_config_file = os.path. join(pkg_lekiwi_description, 'rviz2', 'display.rviz')
+    rviz_config_file = os.path.join(pkg_lekiwi_description, 'rviz2', 'display.rviz')
 
     # Launch argument for simulation time
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
