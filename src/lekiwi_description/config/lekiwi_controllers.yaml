@@ -22,8 +22,9 @@ omni_wheel_drive_controller:
     wheel_radius: 0.054  # 54mm radius (108mm diameter)
     wheel_base_radius: 0.1305  # (108mm + 45mm/2) = 130.5 mm from center to wheel center
 
+    # Wheel offset angle in radians (60 degrees = 1.047 rad, angular spacing between wheels)
     wheel_offset: 1.0471975512
-    robot_radius: 0.1305
+    robot_radius: 0.1305  # Robot radius from center to wheel contact point (same as wheel_base_radius)
 
     # Wheel angles relative to +X axis (in radians)
     wheel_angles:

@@ -176,7 +176,7 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
         output="screen",
         parameters=[
-            {'use_sim_time': True},
+            {'use_sim_time': use_sim_time},
         ]
     )
 
@@ -187,7 +187,7 @@ def generate_launch_description():
         arguments=["omni_wheel_drive_controller", "--controller-manager", "/controller_manager"],
         output="screen",
         parameters=[
-            {'use_sim_time': True},
+            {'use_sim_time': use_sim_time},
         ]
     )
 
