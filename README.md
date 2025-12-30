@@ -72,10 +72,10 @@ For manual joint control and visualization with the hardware interface:
 ros2 run lekiwi_hw_interface lekiwi_motor_bridge
 
 # Terminal 2: Launch robot visualization without GUI
-ros2 launch lekiwi_description display)_rviz2.launch.py
+ros2 launch lekiwi_description display_rviz2.launch.py
 
 # Terminal 3: Launch ROS2 node(s) that publish Twist topic (/cmd_vel)
-
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap cmd_vel:=cmd_vel
 ```
 
 This setup allows you to:
@@ -115,7 +115,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgement
 
 This repo is inspired by the following, and is meant to be used with:
-- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Motor Bridge and Simulation file for SO-101
+- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Motor Bridge and Simulation files for SO-101
 - [LeKiwi Description](https://github.com/teknoman117/lekiwi_description) - Simulation files for LeKiwi
 
 ## 🙋‍♂️ Support
@@ -131,7 +131,7 @@ For questions and support:
 - [SO-101 Hardware](https://github.com/TheRobotStudio/SO-ARM101) - Original SO-101 hardware design
 - [LeKiwi Hardware](https://github.com/SIGRobotics-UIUC/LeKiwi) - Original LeKiwi hardware design
 
-- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Motor Bridge and Simulation file for SO-101
+- [SO-101 ROS2 Support](https://github.com/AgRoboticsResearch/Lerobot_ros2.git) - Motor Bridge and Simulation files for SO-101
 - [LeKiwi Description](https://github.com/teknoman117/lekiwi_description) - Simulation files for LeKiwi
 
 ---
