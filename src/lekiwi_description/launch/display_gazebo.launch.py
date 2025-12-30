@@ -22,7 +22,7 @@ def generate_launch_description():
     os.environ["GZ_SIM_RESOURCE_PATH"] += os.pathsep + gazebo_models_path + os.pathsep + lekiwi_model_path
 
     rviz_launch_arg = DeclareLaunchArgument(
-        'rviz', default_value='true',
+        'rviz', default_value='True',
         description='Open RViz.'
     )
 
@@ -44,7 +44,7 @@ def generate_launch_description():
     rviz_config_file = os.path. join(pkg_lekiwi_description, 'rviz2', 'display.rviz')
 
     # Launch argument for simulation time
-    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='True')
 
 
     # Process the xacro file and wrap in ParameterValue
@@ -106,13 +106,6 @@ def generate_launch_description():
     )
 
     # Node to bridge messages like /cmd_vel and /odom
-    #    arguments=[
-    #        "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
-    #        "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
-    #        "/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry",
-    #        "/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model",
-    #        "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V"
-    #    ],
     gz_bridge_node = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
@@ -126,6 +119,20 @@ def generate_launch_description():
         ]
     )
 
+    # Node to bridge camera topics
+    gz_image_bridge_node = Node(
+        package="ros_gz_image",
+        executable="image_bridge",
+        arguments=[
+            "/lekiwi_front_camera/image",
+        ],
+        output="screen",
+        parameters=[
+            {'use_sim_time': True,
+             'lekiwi_front_camera.image.compressed.jpeg_quality': 75,
+            },
+        ],
+    )
     #joint_state_broadcaster_spawner = Node(
     #    package="controller_manager",
     #    executable="spawner",
@@ -157,9 +164,9 @@ def generate_launch_description():
     launchDescriptionObject.add_action(spawn_urdf_node)
     launchDescriptionObject.add_action(robot_state_publisher_node)
     launchDescriptionObject.add_action(gz_bridge_node)
+    launchDescriptionObject.add_action(gz_image_bridge_node)
     #launchDescriptionObject.add_action(joint_state_broadcaster_spawner)
     launchDescriptionObject.add_action(omni_controllers_spawner)
     launchDescriptionObject.add_action(joint_state_follower_node)
-    
     
     return launchDescriptionObject    
