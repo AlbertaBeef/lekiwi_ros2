@@ -30,6 +30,7 @@ install(
     PROGRAMS
     scripts/publish_zero_joints.py
     scripts/joint_state_follower.py
+    scripts/twist_command_follower.py
     scripts/fix_camera_frame.py
     DESTINATION lib/${PROJECT_NAME}
 )

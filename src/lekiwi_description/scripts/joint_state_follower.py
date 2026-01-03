@@ -22,7 +22,7 @@ class JointStateFollower(Node):
         self.subscription = self.create_subscription(
             JointState,
             '/joint_states',
-            self. joint_state_callback,
+            self.joint_state_callback,
             10)
         
         self.publisher = self.create_publisher(

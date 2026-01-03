@@ -31,21 +31,26 @@ def generate_launch_description():
         description='Name of the Gazebo world file to load'
     )
 
-    model_arg = DeclareLaunchArgument(
-        'model', default_value='mogi_bot.urdf',
-        description='Name of the URDF description to load'
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use sim time if true'
     )
-
+    use_sim_time = LaunchConfiguration('use_sim_time')
+            
+    use_gui_arg = DeclareLaunchArgument(
+        'use_gui',
+        default_value='true',
+        description='Whether to show joint_state_publisher_gui sliders'
+    )
+    use_gui = LaunchConfiguration('use_gui')
+            
     # Path to URDF file
     #urdf_file = os.path.join(pkg_lekiwi_description, 'urdf', 'lekiwi.urdf.xacro')
     urdf_file = os.path.join(pkg_lekiwi_description, 'urdf', 'lekiwi.gazebo.xacro')
     
     # Path to RViz config file
     rviz_config_file = os.path. join(pkg_lekiwi_description, 'rviz2', 'display.rviz')
-
-    # Launch argument for simulation time
-    use_sim_time = LaunchConfiguration('use_sim_time', default='True')
-
 
     # Process the xacro file and wrap in ParameterValue
     robot_description_content = ParameterValue(
@@ -79,6 +84,14 @@ def generate_launch_description():
         parameters=[
             {'use_sim_time': True},
         ]
+    )
+
+    # GUI sliders (only when use_gui=true)
+    twist_publisher_gui = Node(
+        package='rqt_robot_steering',
+        executable='rqt_robot_steering',
+        name='twist_publisher_gui',
+        condition=IfCondition(use_gui)
     )
 
     # Robot State Publisher - publishes TF from URDF
@@ -146,9 +159,16 @@ def generate_launch_description():
         arguments=["omni_wheel_drive_controller"],
         parameters=[{'use_sim_time': True}],
     )
-    joint_state_follower_node = Node(
+    #joint_state_follower_node = Node(
+    #    package='lekiwi_description',
+    #    executable='joint_state_follower.py',
+    #    name='joint_state_follower',
+    #    output='screen',
+    #    parameters=[{'use_sim_time': True}]
+    #)
+    twist_follower_node = Node(
         package='lekiwi_description',
-        executable='joint_state_follower.py',
+        executable='twist_command_follower.py',
         name='joint_state_follower',
         output='screen',
         parameters=[{'use_sim_time': True}]
@@ -158,15 +178,18 @@ def generate_launch_description():
 
     launchDescriptionObject.add_action(rviz_launch_arg)
     launchDescriptionObject.add_action(world_arg)
-    launchDescriptionObject.add_action(model_arg)
+    launchDescriptionObject.add_action(use_sim_time_arg)
+    launchDescriptionObject.add_action(use_gui_arg)
     launchDescriptionObject.add_action(world_launch)
     launchDescriptionObject.add_action(rviz_node)
     launchDescriptionObject.add_action(spawn_urdf_node)
+    launchDescriptionObject.add_action(twist_publisher_gui)     
     launchDescriptionObject.add_action(robot_state_publisher_node)
     launchDescriptionObject.add_action(gz_bridge_node)
     launchDescriptionObject.add_action(gz_image_bridge_node)
     #launchDescriptionObject.add_action(joint_state_broadcaster_spawner)
     launchDescriptionObject.add_action(omni_controllers_spawner)
-    launchDescriptionObject.add_action(joint_state_follower_node)
-    
+    #launchDescriptionObject.add_action(joint_state_follower_node)
+    launchDescriptionObject.add_action(twist_follower_node)
+
     return launchDescriptionObject    
