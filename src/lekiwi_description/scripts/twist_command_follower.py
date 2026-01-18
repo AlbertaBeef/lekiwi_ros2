@@ -102,14 +102,17 @@ class TwistCommandFollower(Node):
             y_cmd = 0.0  # m/s lateral
             theta_cmd = 0.0  # deg/s rotation
 
-            if self.twist_msg.linear.x > 0.1:
-                x_cmd += xy_speed
-            elif self.twist_msg.linear.x < -0.1:
-                x_cmd -= xy_speed
-            if self.twist_msg.angular.z > 0.1:
-                theta_cmd += theta_speed
-            elif self.twist_msg.angular.z < -0.1:
-                theta_cmd -= theta_speed
+            #if self.twist_msg.linear.x > 0.1:
+            #    x_cmd += xy_speed
+            #elif self.twist_msg.linear.x < -0.1:
+            #    x_cmd -= xy_speed
+            x_cmd = self.twist_msg.linear.x
+            #if self.twist_msg.angular.z > 0.1:
+            #    theta_cmd += theta_speed
+            #elif self.twist_msg.angular.z < -0.1:
+            #    theta_cmd -= theta_speed
+            theta_cmd = self.twist_msg.angular.z
+                        
             self.twist_msg = None
             return {
                 "x.vel": x_cmd,
