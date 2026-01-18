@@ -299,8 +299,8 @@ class MotorBridge(Node):
 
             x_cmd = self.twist_msg.linear.x
             y_cmd = self.twist_msg.linear.y
-            #theta_cmd = self.twist_msg.angular.z * (360.0 / (2 * math.pi))
-            theta_cmd = self.twist_msg.angular.z
+            theta_cmd = self.twist_msg.angular.z * (360.0 / (2 * math.pi))
+            #theta_cmd = self.twist_msg.angular.z
             
             self.twist_msg = None
             return {
