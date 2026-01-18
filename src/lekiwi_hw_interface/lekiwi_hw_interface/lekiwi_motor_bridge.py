@@ -280,24 +280,26 @@ class MotorBridge(Node):
     # ---------------------------------------------------------------------     
     def _twist_to_base_action(self):
         if self.twist_msg:
-            speed_setting = self.speed_levels[self.speed_index]
-            xy_speed = speed_setting["xy"]  # e.g. 0.1, 0.25, or 0.4
-            theta_speed = speed_setting["theta"]  # e.g. 30, 60, or 90
-
-            x_cmd = 0.0  # m/s forward/backward
-            y_cmd = 0.0  # m/s lateral
-            theta_cmd = 0.0  # deg/s rotation
-
+            #speed_setting = self.speed_levels[self.speed_index]
+            #xy_speed = speed_setting["xy"]  # e.g. 0.1, 0.25, or 0.4
+            #theta_speed = speed_setting["theta"]  # e.g. 30, 60, or 90
+            #
+            #x_cmd = 0.0  # m/s forward/backward
+            #y_cmd = 0.0  # m/s lateral
+            #theta_cmd = 0.0  # deg/s rotation
+            #
             #if self.twist_msg.linear.x > 0.1:
             #    x_cmd += xy_speed
             #elif self.twist_msg.linear.x < -0.1:
             #    x_cmd -= xy_speed
-            x_cmd = self.twist_msg.linear.x
             #if self.twist_msg.angular.z > 0.1:
             #    theta_cmd += theta_speed
             #elif self.twist_msg.angular.z < -0.1:
             #    theta_cmd -= theta_speed
-            theta_cmd = self.twist_msg.angular.z
+
+            x_cmd = self.twist_msg.linear.x
+            y_cmd = self.twist_msg.linear.y
+            theta_cmd = self.twist_msg.angular.z * (360.0 / (2 * math.pi))
             
             self.twist_msg = None
             return {

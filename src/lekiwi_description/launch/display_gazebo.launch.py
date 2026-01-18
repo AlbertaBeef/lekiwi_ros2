@@ -169,7 +169,7 @@ def generate_launch_description():
     twist_follower_node = Node(
         package='lekiwi_description',
         executable='twist_command_follower.py',
-        name='joint_state_follower',
+        name='twist_command_follower',
         output='screen',
         parameters=[{'use_sim_time': True}]
     )
